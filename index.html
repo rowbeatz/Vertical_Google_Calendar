@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>カレンダー統合ビュー</title>
+  
+  <?!= include('Stylesheet'); ?>
+</head>
+<body>
+  <div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <p>読み込み中...</p>
+  </div>
+
+  <div class="main-container">
+    <header class="app-header">
+      <div class="header-content">
+        <h1 class="app-title">📅 カレンダー統合ビュー</h1>
+        <div class="header-controls">
+          <button id="darkModeToggle" class="icon-btn" title="ダークモード切り替え">🌙</button>
+          <button id="settingsBtn" class="icon-btn" title="設定">⚙️</button>
+          <button id="refreshBtn" class="icon-btn" title="更新">🔄</button>
+        </div>
+      </div>
+    </header>
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2>マイカレンダー</h2>
+        <button id="toggleSidebarBtn" class="icon-btn">◀</button>
+      </div>
+      
+      <div class="sidebar-content">
+        <div class="calendar-list" id="calendarList"></div>
+      </div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+      <div class="control-panel">
+        <div class="date-navigation">
+          <button id="prevWeekBtn" class="nav-btn">◀</button>
+          <div class="date-range-display">
+            <input type="date" id="startDatePicker" class="date-input">
+            <span class="date-separator">〜</span>
+            <input type="date" id="endDatePicker" class="date-input">
+          </div>
+          <button id="nextWeekBtn" class="nav-btn">▶</button>
+          <button id="todayBtn" class="today-btn">今日</button>
+        </div>
+        
+        <div class="view-controls">
+          <button id="addEventBtn" class="add-event-btn">+ イベント追加</button>
+          <select id="viewModeSelect" class="view-select">
+            <option value="day">日</option>
+            <option value="week" selected>週</option>
+            <option value="month">月</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="calendar-view-container">
+        <div id="calendarView" class="calendar-view"></div>
+      </div>
+    </main>
+  </div>
+
+  <div id="settingsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>設定</h2>
+        <button class="close-btn" id="closeSettingsBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-group">
+          <label>週の開始曜日:</label>
+          <select id="startDaySelect">
+            <option value="0">日曜日</option>
+            <option value="1" selected>月曜日</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <label>タイムゾーン:</label>
+          <input type="text" id="timezoneDisplay" readonly value="Asia/Tokyo">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="saveSettingsBtn" class="primary-btn">保存</button>
+        <button id="cancelSettingsBtn" class="secondary-btn">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="eventDetailModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>イベント詳細</h2>
+        <button class="close-btn" id="closeEventDetailBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="event-detail-container">
+          <div class="detail-row">
+            <span class="detail-label">📌 タイトル:</span>
+            <span class="detail-value" id="detailTitle"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">📅 開始:</span>
+            <span class="detail-value" id="detailStart"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">📅 終了:</span>
+            <span class="detail-value" id="detailEnd"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">📍 場所:</span>
+            <span class="detail-value" id="detailLocation"></span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">📝 説明:</span>
+            <div class="detail-value" id="detailDescription"></div>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">📆 カレンダー:</span>
+            <span class="detail-value" id="detailCalendar"></span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="editEventBtn" class="primary-btn">✏️ 編集</button>
+        <button id="deleteEventBtn" class="danger-btn">🗑️ 削除</button>
+        <button id="closeEventDetailBtn2" class="secondary-btn">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="eventFormModal" class="modal">
+    <div class="modal-content modal-large">
+      <div class="modal-header">
+        <h2 id="formModalTitle">イベント作成</h2>
+        <button class="close-btn" id="closeEventFormBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="eventForm">
+          <div class="form-group">
+            <label for="eventTitle">タイトル <span class="required">*</span></label>
+            <input type="text" id="eventTitle" class="form-input" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="eventCalendar">カレンダー <span class="required">*</span></label>
+            <select id="eventCalendar" class="form-input" required></select>
+          </div>
+          
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="eventAllDay">
+              終日イベント
+            </label>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="eventStartDate">開始日 <span class="required">*</span></label>
+              <input type="date" id="eventStartDate" class="form-input" required>
+            </div>
+            <div class="form-group" id="eventStartTimeGroup">
+              <label for="eventStartTime">開始時刻</label>
+              <input type="time" id="eventStartTime" class="form-input">
+            </div>
+          </div>
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label for="eventEndDate">終了日 <span class="required">*</span></label>
+              <input type="date" id="eventEndDate" class="form-input" required>
+            </div>
+            <div class="form-group" id="eventEndTimeGroup">
+              <label for="eventEndTime">終了時刻</label>
+              <input type="time" id="eventEndTime" class="form-input">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="eventLocation">場所</label>
+            <input type="text" id="eventLocation" class="form-input">
+          </div>
+          
+          <div class="form-group">
+            <label for="eventDescription">説明</label>
+            <textarea id="eventDescription" class="form-textarea" rows="4"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="eventColor">色</label>
+            <select id="eventColor" class="form-input">
+              <option value="">デフォルト</option>
+              <option value="1">ラベンダー</option>
+              <option value="2">セージ</option>
+              <option value="3">グレープ</option>
+              <option value="4">フラミンゴ</option>
+              <option value="5">バナナ</option>
+              <option value="6">タンジェリン</option>
+              <option value="7">ピーコック</option>
+              <option value="8">グラファイト</option>
+              <option value="9">ブルーベリー</option>
+              <option value="10">バジル</option>
+              <option value="11">トマト</option>
+            </select>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button id="saveEventBtn" class="primary-btn">💾 保存</button>
+        <button id="cancelEventFormBtn" class="secondary-btn">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="calendarColorModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>カレンダー色の変更</h2>
+        <button class="close-btn" id="closeCalendarColorBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="colorModalCalendarName" class="mb-2"></p>
+        <div class="color-picker-grid">
+          <div class="color-option" data-color="#3b82f6" style="background: #3b82f6;"></div>
+          <div class="color-option" data-color="#14b8a6" style="background: #14b8a6;"></div>
+          <div class="color-option" data-color="#f97316" style="background: #f97316;"></div>
+          <div class="color-option" data-color="#22c55e" style="background: #22c55e;"></div>
+          <div class="color-option" data-color="#eab308" style="background: #eab308;"></div>
+          <div class="color-option" data-color="#ef4444" style="background: #ef4444;"></div>
+          <div class="color-option" data-color="#8b5cf6" style="background: #8b5cf6;"></div>
+          <div class="color-option" data-color="#ec4899" style="background: #ec4899;"></div>
+          <div class="color-option" data-color="#06b6d4" style="background: #06b6d4;"></div>
+          <div class="color-option" data-color="#84cc16" style="background: #84cc16;"></div>
+          <div class="color-option" data-color="#f59e0b" style="background: #f59e0b;"></div>
+          <div class="color-option" data-color="#6b7280" style="background: #6b7280;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="resetCalendarColorBtn" class="secondary-btn">リセット</button>
+        <button id="closeCalendarColorBtn2" class="secondary-btn">閉じる</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="errorToast" class="toast error-toast">
+    <span id="errorMessage"></span>
+  </div>
+
+  <div id="successToast" class="toast success-toast">
+    <span id="successMessage"></span>
+  </div>
+
+  <?!= include('JavaScript'); ?>
+</body>
+</html>

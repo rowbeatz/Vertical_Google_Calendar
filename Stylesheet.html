@@ -1,0 +1,1059 @@
+<style>
+/* ========================================
+   リセット & ベーススタイル
+   ======================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary-color: #3b82f6;
+  --secondary-color: #14b8a6;
+  --accent-color: #f97316;
+  --success-color: #22c55e;
+  --warning-color: #eab308;
+  --error-color: #ef4444;
+  
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  
+  --bg-primary: #ffffff;
+  --bg-secondary: var(--gray-50);
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --border-color: var(--gray-200);
+  
+  --sidebar-width: 280px;
+  --header-height: 60px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  
+  --border-radius: 8px;
+  --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --box-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
+  --transition: all 0.3s ease;
+}
+
+body.dark-mode {
+  --bg-primary: var(--gray-900);
+  --bg-secondary: var(--gray-800);
+  --text-primary: var(--gray-100);
+  --text-secondary: var(--gray-300);
+  --border-color: var(--gray-700);
+  --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --box-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ========================================
+   ローディング
+   ======================================== */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease;
+}
+
+body.dark-mode .loading-overlay {
+  background: rgba(17, 24, 39, 0.95);
+}
+
+.loading-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid var(--gray-200);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ========================================
+   メインコンテナ
+   ======================================== */
+.main-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ========================================
+   ヘッダー
+   ======================================== */
+.app-header {
+  height: var(--header-height);
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--box-shadow);
+  z-index: 100;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 var(--spacing-lg);
+  max-width: 100%;
+}
+
+.app-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.header-controls {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
+/* ========================================
+   サイドバー
+   ======================================== */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: var(--header-height);
+  width: var(--sidebar-width);
+  height: calc(100vh - var(--header-height));
+  background: var(--bg-primary);
+  border-right: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  transition: var(--transition);
+  z-index: 90;
+  overflow: hidden;
+}
+
+.sidebar.collapsed {
+  transform: translateX(calc(-1 * var(--sidebar-width) + 40px));
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-md);
+}
+
+/* ========================================
+   カレンダーリスト
+   ======================================== */
+.calendar-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.calendar-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  cursor: move;
+  transition: var(--transition);
+  user-select: none;
+}
+
+.calendar-item:hover {
+  background: var(--gray-100);
+  box-shadow: var(--box-shadow);
+}
+
+body.dark-mode .calendar-item:hover {
+  background: var(--gray-700);
+}
+
+.calendar-item.dragging {
+  opacity: 0.5;
+}
+
+.calendar-checkbox {
+  margin-right: var(--spacing-sm);
+  cursor: pointer;
+}
+
+.calendar-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: var(--spacing-sm);
+  border: 2px solid var(--bg-primary);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.calendar-color:hover {
+  transform: scale(1.2);
+  box-shadow: var(--box-shadow);
+}
+
+.calendar-name {
+  flex: 1;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.drag-handle {
+  margin-left: auto;
+  cursor: move;
+  color: var(--gray-400);
+  padding: var(--spacing-xs);
+}
+
+/* ========================================
+   メインコンテンツ
+   ======================================== */
+.main-content {
+  flex: 1;
+  margin-left: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: var(--transition);
+  background: var(--bg-secondary);
+}
+
+.sidebar.collapsed ~ .main-content {
+  margin-left: 40px;
+}
+
+/* ========================================
+   コントロールパネル
+   ======================================== */
+.control-panel {
+  background: var(--bg-primary);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.date-navigation {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.date-range-display {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+}
+
+.date-input {
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 14px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.date-separator {
+  color: var(--text-secondary);
+}
+
+.view-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+/* ========================================
+   ボタンスタイル
+   ======================================== */
+.icon-btn, .nav-btn {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 16px;
+  color: var(--text-primary);
+}
+
+.icon-btn:hover, .nav-btn:hover {
+  background: var(--gray-100);
+  box-shadow: var(--box-shadow);
+}
+
+body.dark-mode .icon-btn:hover,
+body.dark-mode .nav-btn:hover {
+  background: var(--gray-700);
+}
+
+.today-btn {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.today-btn:hover {
+  background: #2563eb;
+}
+
+.add-event-btn {
+  background: var(--success-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.add-event-btn:hover {
+  background: #16a34a;
+}
+
+.primary-btn {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.primary-btn:hover {
+  background: #2563eb;
+}
+
+.secondary-btn {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.secondary-btn:hover {
+  background: var(--gray-100);
+}
+
+body.dark-mode .secondary-btn:hover {
+  background: var(--gray-700);
+}
+
+.danger-btn {
+  background: var(--error-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition);
+}
+
+.danger-btn:hover {
+  background: #dc2626;
+}
+
+.view-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+/* ========================================
+   カレンダービュー(PC版)
+   ======================================== */
+.calendar-view-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: var(--spacing-md);
+}
+
+.calendar-view {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  position: relative;
+}
+
+.calendar-left-column {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-primary);
+  border-right: 2px solid var(--border-color);
+  z-index: 30;
+}
+
+.calendar-corner-cell {
+  background: var(--gray-200);
+  padding: var(--spacing-md);
+  font-weight: 600;
+  text-align: center;
+  border-bottom: 2px solid var(--border-color);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+  flex-shrink: 0;
+  position: relative;
+}
+
+body.dark-mode .calendar-corner-cell {
+  background: var(--gray-700);
+}
+
+.calendar-name-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.calendar-name-row {
+  background: var(--gray-50);
+  padding: var(--spacing-md);
+  font-weight: 500;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  min-height: 80px;
+}
+
+body.dark-mode .calendar-name-row {
+  background: var(--gray-800);
+}
+
+.calendar-right-section {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-dates-wrapper {
+  display: inline-block;
+  min-width: 100%;
+}
+
+.calendar-header-row {
+  display: flex;
+  border-bottom: 2px solid var(--border-color);
+  background: var(--bg-primary);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.calendar-body-grid {
+  display: grid;
+}
+
+.calendar-header {
+  display: contents;
+}
+
+.calendar-header-cell {
+  background: var(--gray-100);
+  padding: var(--spacing-md);
+  font-weight: 600;
+  text-align: center;
+  border-right: 1px solid var(--border-color);
+  position: relative;
+  flex-shrink: 0;
+}
+
+body.dark-mode .calendar-header-cell {
+  background: var(--gray-800);
+}
+
+/* リサイズハンドル */
+.resize-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  background: transparent;
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+.resize-handle:hover {
+  background: var(--primary-color);
+  opacity: 0.5;
+}
+
+.resize-handle.resizing {
+  background: var(--primary-color);
+  opacity: 0.7;
+}
+
+.calendar-row {
+  display: contents;
+}
+
+.calendar-cell {
+  padding: var(--spacing-sm);
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  min-height: 80px;
+  vertical-align: top;
+  background: var(--bg-primary);
+  overflow: hidden;
+}
+
+.event {
+  background: var(--primary-color);
+  color: white;
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: var(--transition);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.3;
+  max-width: 100%;
+}
+
+.event:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
+  box-shadow: var(--box-shadow);
+}
+
+.event-time {
+  font-weight: 600;
+  margin-right: 4px;
+  display: inline-block;
+}
+
+/* ========================================
+   スマホ版カレンダービュー
+   ======================================== */
+.calendar-view-mobile {
+  display: none;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  overflow-y: auto;
+}
+
+.mobile-day-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  overflow: hidden;
+}
+
+.mobile-day-header {
+  background: var(--gray-100);
+  padding: var(--spacing-md);
+  font-weight: 600;
+  font-size: 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+body.dark-mode .mobile-day-header {
+  background: var(--gray-800);
+}
+
+.mobile-day-header.today {
+  background: var(--primary-color);
+  color: white;
+}
+
+.mobile-day-content {
+  padding: var(--spacing-md);
+}
+
+.mobile-calendar-section {
+  margin-bottom: var(--spacing-md);
+}
+
+.mobile-calendar-section:last-child {
+  margin-bottom: 0;
+}
+
+.mobile-calendar-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.mobile-calendar-name {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.mobile-events-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.mobile-event {
+  background: var(--gray-50);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--border-radius);
+  border-left: 4px solid var(--primary-color);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+body.dark-mode .mobile-event {
+  background: var(--gray-800);
+}
+
+.mobile-event:hover {
+  background: var(--gray-100);
+  transform: translateX(4px);
+}
+
+body.dark-mode .mobile-event:hover {
+  background: var(--gray-700);
+}
+
+.mobile-event-title {
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.mobile-event-details {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.mobile-no-events {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--gray-400);
+  font-size: 14px;
+}
+
+/* ========================================
+   モーダル
+   ======================================== */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--bg-primary);
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-lg);
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow: auto;
+}
+
+.modal-large {
+  max-width: 600px;
+}
+
+.modal-header {
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.modal-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--gray-500);
+  transition: var(--transition);
+}
+
+.close-btn:hover {
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: var(--spacing-lg);
+}
+
+.modal-footer {
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.event-detail-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.detail-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.detail-value {
+  color: var(--text-primary);
+  word-wrap: break-word;
+}
+
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.form-textarea {
+  resize: vertical;
+}
+
+.required {
+  color: var(--error-color);
+}
+
+.color-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) 0;
+}
+
+.color-option {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  transition: var(--transition);
+  border: 3px solid transparent;
+}
+
+.color-option:hover {
+  transform: scale(1.1);
+  border-color: var(--border-color);
+}
+
+.color-option.selected {
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 4px var(--text-primary);
+}
+
+.setting-group {
+  margin-bottom: var(--spacing-md);
+}
+
+.setting-group label {
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-weight: 500;
+}
+
+.setting-group input,
+.setting-group select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 14px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* ========================================
+   トースト通知
+   ======================================== */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 16px 24px;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow-lg);
+  z-index: 2000;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: var(--transition);
+  max-width: 400px;
+}
+
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.success-toast {
+  background: var(--success-color);
+  color: white;
+}
+
+.error-toast {
+  background: var(--error-color);
+  color: white;
+}
+
+/* ========================================
+   レスポンシブ対応
+   ======================================== */
+@media (max-width: 768px) {
+  /* サイドバーを全幅に */
+  .sidebar {
+    width: 100%;
+    transform: translateX(-100%);
+  }
+  
+  .sidebar.active {
+    transform: translateX(0);
+  }
+  
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+  }
+  
+  .main-content {
+    margin-left: 0 !important;
+  }
+  
+  .app-title {
+    font-size: 16px;
+  }
+  
+  .control-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .date-navigation {
+    flex-wrap: wrap;
+  }
+  
+  /* PC版カレンダービューを非表示 */
+  .calendar-view {
+    display: none !important;
+  }
+  
+  /* スマホ版カレンダービューを表示 */
+  .calendar-view-mobile {
+    display: flex;
+  }
+  
+  .calendar-view-container {
+    padding: 0;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .modal-content {
+    width: 95%;
+  }
+  
+  .color-picker-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .toast {
+    left: 10px;
+    right: 10px;
+    max-width: none;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --header-height: 50px;
+    --spacing-md: 12px;
+  }
+  
+  .header-content {
+    padding: 0 var(--spacing-md);
+  }
+  
+  .date-input {
+    font-size: 12px;
+  }
+  
+  .event {
+    font-size: 11px;
+  }
+  
+  .mobile-day-header {
+    font-size: 14px;
+  }
+  
+  .mobile-event-title {
+    font-size: 14px;
+  }
+}
+
+/* PC版でスマホビューを非表示 */
+@media (min-width: 769px) {
+  .calendar-view-mobile {
+    display: none !important;
+  }
+}
+
+/* ========================================
+   ユーティリティ
+   ======================================== */
+.hidden {
+  display: none !important;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.mt-1 { margin-top: var(--spacing-sm); }
+.mt-2 { margin-top: var(--spacing-md); }
+.mb-1 { margin-bottom: var(--spacing-sm); }
+.mb-2 { margin-bottom: var(--spacing-md); }
+</style>
