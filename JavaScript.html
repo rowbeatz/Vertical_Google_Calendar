@@ -843,21 +843,28 @@
     const dates = generateDateRange(AppState.startDate, AppState.endDate);
     const orderedCalendars = getOrderedSelectedCalendars();
 
-    // 左側のカレンダー名列を作成
     const leftColumn = createLeftColumn(orderedCalendars);
-
-    // 右側のスクロール可能エリアを作成
     const rightSection = createRightSection(dates, orderedCalendars);
 
     container.appendChild(leftColumn);
     container.appendChild(rightSection);
 
-    // 右側のスクロールイベントと左側のスクロールを同期
-    const rightScroll = rightSection;
     const leftScroll = leftColumn.querySelector('.calendar-name-list');
 
-    rightScroll.addEventListener('scroll', function() {
-      leftScroll.scrollTop = rightScroll.scrollTop;
+    let isSyncing = false;
+
+    rightSection.addEventListener('scroll', function() {
+        if (isSyncing) return;
+        isSyncing = true;
+        leftScroll.scrollTop = rightSection.scrollTop;
+        requestAnimationFrame(() => { isSyncing = false; });
+    });
+
+    leftScroll.addEventListener('scroll', function() {
+        if (isSyncing) return;
+        isSyncing = true;
+        rightSection.scrollTop = leftScroll.scrollTop;
+        requestAnimationFrame(() => { isSyncing = false; });
     });
 
     return container;
@@ -1145,138 +1152,119 @@
 
   function renderMobileCalendarView() {
     let mobileContainer = document.querySelector('.calendar-view-mobile');
-
     if (!mobileContainer) {
-      mobileContainer = document.createElement('div');
-      mobileContainer.className = 'calendar-view-mobile';
-      document.querySelector('.calendar-view-container').appendChild(mobileContainer);
+        mobileContainer = document.createElement('div');
+        mobileContainer.className = 'calendar-view-mobile';
+        document.querySelector('.calendar-view-container').appendChild(mobileContainer);
     }
-
     mobileContainer.innerHTML = '';
 
     const dates = generateDateRange(AppState.startDate, AppState.endDate);
     const orderedCalendars = getOrderedSelectedCalendars();
 
+    let eventsFound = false;
+
+    const fragment = document.createDocumentFragment();
+
     dates.forEach(date => {
-      const dayCard = createMobileDayCard(date, orderedCalendars);
-      mobileContainer.appendChild(dayCard);
-    });
-  }
+        const eventsForDay = [];
+        orderedCalendars.forEach(calendar => {
+            const calendarEvents = AppState.events[calendar.id] || [];
+            const dayEvents = getEventsForDate(calendarEvents, date);
+            if (dayEvents.length > 0) {
+                eventsFound = true;
+                dayEvents.forEach(event => {
+                    eventsForDay.push({ event, calendar });
+                });
+            }
+        });
 
-  function createMobileDayCard(date, calendars) {
-    const card = document.createElement('div');
-    card.className = 'mobile-day-card';
+        eventsForDay.sort((a,b) => new Date(a.event.start) - new Date(b.event.start));
+
+        const dayGroup = createMobileDayGroup(date, eventsForDay);
+        fragment.appendChild(dayGroup);
+    });
+
+    if (!eventsFound) {
+        mobileContainer.innerHTML = '<div class="mobile-no-events">この期間に予定はありません</div>';
+    } else {
+        mobileContainer.appendChild(fragment);
+    }
+}
+
+function createMobileDayGroup(date, eventsWithCalendar) {
+    const group = document.createElement('div');
+    group.className = 'mobile-day-group';
 
     const header = document.createElement('div');
-    header.className = 'mobile-day-header';
+    header.className = 'mobile-day-header-sticky';
     if (isToday(date)) {
-      header.classList.add('today');
+        header.classList.add('today');
     }
-
-    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const dayOfWeek = dayNames[date.getDay()];
-    const dateStr = `${date.getMonth() + 1}月${date.getDate()}日(${dayOfWeek})`;
-    header.textContent = dateStr;
+    header.innerHTML = `<span class="date">${date.getDate()}</span> <span class="day">${dayOfWeek}</span>`;
 
-    const content = document.createElement('div');
-    content.className = 'mobile-day-content';
+    group.appendChild(header);
 
-    let hasEvents = false;
-
-    calendars.forEach(calendar => {
-      const calendarEvents = AppState.events[calendar.id] || [];
-      const dayEvents = getEventsForDate(calendarEvents, date);
-
-      if (dayEvents.length > 0) {
-        hasEvents = true;
-        const section = createMobileCalendarSection(calendar, dayEvents);
-        content.appendChild(section);
-      }
-    });
-
-    if (!hasEvents) {
-      content.innerHTML = '<div class="mobile-no-events">予定なし</div>';
+    if (eventsWithCalendar.length > 0) {
+        eventsWithCalendar.forEach(({ event, calendar }) => {
+            const eventEl = createMobileEventElement(event, calendar.color);
+            group.appendChild(eventEl);
+        });
     }
 
-    card.appendChild(header);
-    card.appendChild(content);
+    return group;
+}
 
-    return card;
-  }
+function createMobileEventElement(event, calendarColor) {
+    const el = document.createElement('div');
+    el.className = 'mobile-event-item';
 
-  function createMobileCalendarSection(calendar, events) {
-    const section = document.createElement('div');
-    section.className = 'mobile-calendar-section';
+    const colorBar = document.createElement('div');
+    colorBar.className = 'mobile-event-color-bar';
+    colorBar.style.backgroundColor = event.color || calendarColor;
 
-    const header = document.createElement('div');
-    header.className = 'mobile-calendar-header';
+    const timeContainer = document.createElement('div');
+    timeContainer.className = 'mobile-event-time';
+    if (event.isAllDay) {
+        timeContainer.textContent = '終日';
+    } else {
+        const startTime = new Date(event.start);
+        const endTime = new Date(event.end);
+        timeContainer.innerHTML = `${formatTime(startTime)}<br>${formatTime(endTime)}`;
+    }
 
-    const colorIndicator = document.createElement('div');
-    colorIndicator.className = 'calendar-color';
-    colorIndicator.style.backgroundColor = calendar.color;
-
-    const nameSpan = document.createElement('span');
-    nameSpan.className = 'mobile-calendar-name';
-    nameSpan.textContent = calendar.name;
-
-    header.appendChild(colorIndicator);
-    header.appendChild(nameSpan);
-
-    const eventsList = document.createElement('div');
-    eventsList.className = 'mobile-events-list';
-
-    events.forEach(event => {
-      const eventDiv = createMobileEventElement(event, calendar.color);
-      eventsList.appendChild(eventDiv);
-    });
-
-    section.appendChild(header);
-    section.appendChild(eventsList);
-
-    return section;
-  }
-
-  function createMobileEventElement(event, defaultColor) {
-    const div = document.createElement('div');
-    div.className = 'mobile-event';
-    div.style.borderLeftColor = event.color || defaultColor;
+    const detailsContainer = document.createElement('div');
+    detailsContainer.className = 'mobile-event-details';
 
     const title = document.createElement('div');
     title.className = 'mobile-event-title';
     title.textContent = event.title;
 
-    const details = document.createElement('div');
-    details.className = 'mobile-event-details';
+    const calendarName = document.createElement('div');
+    calendarName.className = 'mobile-event-calendar';
+    const cal = AppState.calendars.find(c => c.id === event.calendarId);
+    calendarName.textContent = cal ? cal.name : '';
 
-    if (!event.isAllDay) {
-      const startTime = new Date(event.start);
-      const endTime = new Date(event.end);
-      const timeStr = `${formatTime(startTime)} - ${formatTime(endTime)}`;
-
-      const timeSpan = document.createElement('span');
-      timeSpan.textContent = '🕐 ' + timeStr;
-      details.appendChild(timeSpan);
-    } else {
-      const allDaySpan = document.createElement('span');
-      allDaySpan.textContent = '📅 終日';
-      details.appendChild(allDaySpan);
-    }
+    detailsContainer.appendChild(title);
+    detailsContainer.appendChild(calendarName);
 
     if (event.location) {
-      const locationSpan = document.createElement('span');
-      locationSpan.textContent = '📍 ' + event.location;
-      details.appendChild(locationSpan);
+        const location = document.createElement('div');
+        location.className = 'mobile-event-location';
+        location.textContent = `📍 ${event.location}`;
+        detailsContainer.appendChild(location);
     }
 
-    div.appendChild(title);
-    div.appendChild(details);
+    el.appendChild(colorBar);
+    el.appendChild(timeContainer);
+    el.appendChild(detailsContainer);
 
-    div.addEventListener('click', function() {
-      showEventDetail(event);
-    });
+    el.addEventListener('click', () => showEventDetail(event));
 
-    return div;
-  }
+    return el;
+}
 
   function generateDateRange(start, end) {
     const dates = [];

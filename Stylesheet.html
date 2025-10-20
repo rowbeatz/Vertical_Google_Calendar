@@ -674,114 +674,119 @@ body.dark-mode .calendar-header-cell {
 }
 
 /* ========================================
-   スマホ版カレンダービュー
+   新スマホ版カレンダービュー
    ======================================== */
 .calendar-view-mobile {
   display: none;
   flex-direction: column;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
   overflow-y: auto;
+  height: 100%;
+  background-color: var(--bg-primary);
 }
 
-.mobile-day-card {
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
-  overflow: hidden;
-}
-
-.mobile-day-header {
-  background: var(--gray-100);
-  padding: var(--spacing-md);
-  font-weight: 600;
-  font-size: 16px;
+.mobile-day-group {
+  display: flex;
+  flex-direction: row;
   border-bottom: 1px solid var(--border-color);
 }
 
-body.dark-mode .mobile-day-header {
-  background: var(--gray-800);
-}
-
-.mobile-day-header.today {
-  background: var(--primary-color);
-  color: white;
-}
-
-.mobile-day-content {
+.mobile-day-header-sticky {
+  position: sticky;
+  top: 0;
   padding: var(--spacing-md);
-}
-
-.mobile-calendar-section {
-  margin-bottom: var(--spacing-md);
-}
-
-.mobile-calendar-section:last-child {
-  margin-bottom: 0;
-}
-
-.mobile-calendar-header {
+  background-color: var(--bg-primary);
+  z-index: 10;
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
-  padding-bottom: var(--spacing-sm);
+}
+
+.mobile-day-header-sticky .date {
+  font-size: 24px;
+  font-weight: 300;
+}
+
+.mobile-day-header-sticky .day {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.mobile-day-header-sticky.today .date {
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.mobile-day-header-sticky.today .day {
+  color: var(--primary-color);
+}
+
+.mobile-events-container {
+  flex-grow: 1;
+  padding-left: 70px; /* ヘッダーの幅に合わせる */
+}
+
+.mobile-event-item {
+  display: flex;
+  padding: var(--spacing-md) 0;
+  margin-left: var(--spacing-md);
   border-bottom: 1px solid var(--border-color);
 }
 
-.mobile-calendar-name {
-  font-weight: 500;
-  font-size: 14px;
+.mobile-day-group:last-child .mobile-event-item:last-child {
+  border-bottom: none;
 }
 
-.mobile-events-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
+.mobile-event-color-bar {
+  width: 4px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  margin-right: var(--spacing-sm);
 }
 
-.mobile-event {
-  background: var(--gray-50);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--border-radius);
-  border-left: 4px solid var(--primary-color);
-  cursor: pointer;
-  transition: var(--transition);
+.mobile-event-time {
+  flex-basis: 60px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 12px;
+  padding-right: var(--spacing-md);
+  color: var(--text-secondary);
 }
 
-body.dark-mode .mobile-event {
-  background: var(--gray-800);
-}
-
-.mobile-event:hover {
-  background: var(--gray-100);
-  transform: translateX(4px);
-}
-
-body.dark-mode .mobile-event:hover {
-  background: var(--gray-700);
+.mobile-event-details {
+  flex-grow: 1;
 }
 
 .mobile-event-title {
   font-weight: 500;
-  margin-bottom: 4px;
+  font-size: 15px;
+  margin-bottom: var(--spacing-xs);
 }
 
-.mobile-event-details {
+.mobile-event-calendar,
+.mobile-event-location {
   font-size: 12px;
   color: var(--text-secondary);
   display: flex;
-  gap: var(--spacing-sm);
-  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
 .mobile-no-events {
   text-align: center;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-xl);
   color: var(--gray-400);
-  font-size: 14px;
 }
+
 
 /* ========================================
    モーダル
@@ -1101,18 +1106,6 @@ body.dark-mode .mobile-event:hover {
 
   .date-input {
     font-size: 12px;
-  }
-
-  .event {
-    font-size: 11px;
-  }
-
-  .mobile-day-header {
-    font-size: 14px;
-  }
-
-  .mobile-event-title {
-    font-size: 14px;
   }
 }
 
