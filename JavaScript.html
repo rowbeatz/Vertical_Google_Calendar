@@ -437,9 +437,21 @@
     renderCalendarView();
   }
 
-  function navigateToday() {
+  async function navigateToday() {
     initializeDateRange();
-    renderCalendarView();
+    await renderCalendarView();
+
+    if (!isMobileView()) {
+        const today = new Date();
+        const dates = generateDateRange(AppState.startDate, AppState.endDate);
+        const todayIndex = dates.findIndex(date => isToday(date));
+
+        if (todayIndex !== -1) {
+            const rightSection = document.querySelector('.calendar-right-section');
+            const scrollLeft = todayIndex * AppState.columnWidth;
+            rightSection.scrollLeft = scrollLeft;
+        }
+    }
   }
 
   function changeViewMode(mode) {
@@ -787,6 +799,7 @@
         container.innerHTML = '';
         const grid = createCalendarGrid();
         container.appendChild(grid);
+        syncRowHeights();
       }
 
       showLoading(false);
@@ -796,6 +809,32 @@
       showLoading(false);
     }
   }
+
+  function syncRowHeights() {
+    const nameRows = document.querySelectorAll('.calendar-name-row');
+    const bodyGrid = document.querySelector('.calendar-body-grid');
+    if (!bodyGrid || nameRows.length === 0) return;
+
+    const numCalendars = nameRows.length;
+    const numDates = (bodyGrid.children.length / numCalendars);
+
+    for (let i = 0; i < numCalendars; i++) {
+        let maxRowHeight = 0;
+        for (let j = 0; j < numDates; j++) {
+            const cell = bodyGrid.children[i * numDates + j];
+            if (cell.scrollHeight > maxRowHeight) {
+                maxRowHeight = cell.scrollHeight;
+            }
+        }
+
+        const targetHeight = Math.max(50, maxRowHeight) + 'px';
+        nameRows[i].style.height = targetHeight;
+
+        for (let j = 0; j < numDates; j++) {
+            bodyGrid.children[i * numDates + j].style.height = targetHeight;
+        }
+    }
+}
 
   function createCalendarGrid() {
     const container = document.createElement('div');
