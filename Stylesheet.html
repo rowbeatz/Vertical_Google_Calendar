@@ -15,7 +15,7 @@
   --success-color: #22c55e;
   --warning-color: #eab308;
   --error-color: #ef4444;
-  
+
   --gray-50: #f9fafb;
   --gray-100: #f3f4f6;
   --gray-200: #e5e7eb;
@@ -26,13 +26,13 @@
   --gray-700: #374151;
   --gray-800: #1f2937;
   --gray-900: #111827;
-  
+
   --bg-primary: #ffffff;
   --bg-secondary: var(--gray-50);
   --text-primary: var(--gray-900);
   --text-secondary: var(--gray-600);
   --border-color: var(--gray-200);
-  
+
   --sidebar-width: 280px;
   --header-height: 60px;
   --spacing-xs: 4px;
@@ -40,7 +40,7 @@
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
-  
+
   --border-radius: 8px;
   --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   --box-shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.15);
@@ -65,6 +65,21 @@ body {
   background-color: var(--bg-secondary);
   overflow-x: hidden;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ========================================
+   アニメーション
+   ======================================== */
+@keyframes slideInUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
 }
 
 /* ========================================
@@ -326,6 +341,23 @@ body.dark-mode .calendar-item:hover {
 /* ========================================
    ボタンスタイル
    ======================================== */
+.icon-btn, .nav-btn, .fab, .primary-btn, .secondary-btn, .danger-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(0);
+  animation: ripple 0.6s linear;
+}
+
+body.dark-mode .ripple {
+  background: rgba(0, 0, 0, 0.4);
+}
+
 .icon-btn, .nav-btn {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
@@ -433,6 +465,31 @@ body.dark-mode .secondary-btn:hover {
   color: var(--text-primary);
   cursor: pointer;
   font-size: 14px;
+}
+
+/* ========================================
+   フローティングアクションボタン(FAB)
+   ======================================== */
+.fab {
+  display: none;
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  font-size: 24px;
+  border: none;
+  box-shadow: var(--box-shadow-lg);
+  z-index: 999;
+  align-items: center;
+  justify-content: center;
+}
+
+.fab:hover {
+  background-color: #2563eb;
 }
 
 /* ========================================
@@ -947,63 +1004,88 @@ body.dark-mode .mobile-event:hover {
   .sidebar {
     width: 100%;
     transform: translateX(-100%);
+    z-index: 1001;
   }
-  
+
   .sidebar.active {
     transform: translateX(0);
   }
-  
+
   .sidebar.collapsed {
     transform: translateX(-100%);
   }
-  
+
   .main-content {
     margin-left: 0 !important;
   }
-  
+
   .app-title {
     font-size: 16px;
   }
-  
+
   .control-panel {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .date-navigation {
-    flex-wrap: wrap;
+    order: 2;
+    justify-content: center;
   }
-  
+
+  .view-controls {
+    order: 1;
+  }
+
+  .add-event-btn {
+    display: none;
+  }
+
+  .fab {
+    display: flex;
+  }
+
   /* PC版カレンダービューを非表示 */
   .calendar-view {
     display: none !important;
   }
-  
+
   /* スマホ版カレンダービューを表示 */
   .calendar-view-mobile {
     display: flex;
   }
-  
+
   .calendar-view-container {
     padding: 0;
   }
-  
+
   .form-row {
     grid-template-columns: 1fr;
   }
-  
-  .modal-content {
-    width: 95%;
+
+  .modal.active {
+    align-items: flex-end;
   }
-  
+
+  .modal-content {
+    width: 100%;
+    max-width: 100%;
+    height: 95vh;
+    max-height: 95vh;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    animation: slideInUp 0.3s ease-out;
+  }
+
   .color-picker-grid {
     grid-template-columns: repeat(4, 1fr);
   }
-  
+
   .toast {
     left: 10px;
     right: 10px;
-    max-width: none;
+    bottom: 80px;
+    max-width: calc(100% - 20px);
   }
 }
 
@@ -1012,23 +1094,23 @@ body.dark-mode .mobile-event:hover {
     --header-height: 50px;
     --spacing-md: 12px;
   }
-  
+
   .header-content {
     padding: 0 var(--spacing-md);
   }
-  
+
   .date-input {
     font-size: 12px;
   }
-  
+
   .event {
     font-size: 11px;
   }
-  
+
   .mobile-day-header {
     font-size: 14px;
   }
-  
+
   .mobile-event-title {
     font-size: 14px;
   }
@@ -1036,7 +1118,7 @@ body.dark-mode .mobile-event:hover {
 
 /* PC版でスマホビューを非表示 */
 @media (min-width: 769px) {
-  .calendar-view-mobile {
+  .calendar-view-mobile, .fab {
     display: none !important;
   }
 }
