@@ -4,7 +4,7 @@
  */
 
 function doGet(e) {
-  return HtmlService.createTemplateFromFile('Index')
+  return HtmlService.createTemplateFromFile('index')
     .evaluate()
     .setTitle('カレンダー統合ビュー')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0')

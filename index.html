@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>カレンダー統合ビュー</title>
-  
+
   <?!= include('Stylesheet'); ?>
 </head>
 <body>
@@ -31,7 +31,7 @@
         <h2>マイカレンダー</h2>
         <button id="toggleSidebarBtn" class="icon-btn">◀</button>
       </div>
-      
+
       <div class="sidebar-content">
         <div class="calendar-list" id="calendarList"></div>
       </div>
@@ -49,7 +49,7 @@
           <button id="nextWeekBtn" class="nav-btn">▶</button>
           <button id="todayBtn" class="today-btn">今日</button>
         </div>
-        
+
         <div class="view-controls">
           <button id="addEventBtn" class="add-event-btn">+ イベント追加</button>
           <select id="viewModeSelect" class="view-select">
@@ -65,6 +65,8 @@
       </div>
     </main>
   </div>
+
+  <button id="mobileAddEventFab" class="fab">+</button>
 
   <div id="settingsModal" class="modal">
     <div class="modal-content">
@@ -146,19 +148,19 @@
             <label for="eventTitle">タイトル <span class="required">*</span></label>
             <input type="text" id="eventTitle" class="form-input" required>
           </div>
-          
+
           <div class="form-group">
             <label for="eventCalendar">カレンダー <span class="required">*</span></label>
             <select id="eventCalendar" class="form-input" required></select>
           </div>
-          
+
           <div class="form-group">
             <label>
               <input type="checkbox" id="eventAllDay">
               終日イベント
             </label>
           </div>
-          
+
           <div class="form-row">
             <div class="form-group">
               <label for="eventStartDate">開始日 <span class="required">*</span></label>
@@ -169,7 +171,7 @@
               <input type="time" id="eventStartTime" class="form-input">
             </div>
           </div>
-          
+
           <div class="form-row">
             <div class="form-group">
               <label for="eventEndDate">終了日 <span class="required">*</span></label>
@@ -180,17 +182,17 @@
               <input type="time" id="eventEndTime" class="form-input">
             </div>
           </div>
-          
+
           <div class="form-group">
             <label for="eventLocation">場所</label>
             <input type="text" id="eventLocation" class="form-input">
           </div>
-          
+
           <div class="form-group">
             <label for="eventDescription">説明</label>
             <textarea id="eventDescription" class="form-textarea" rows="4"></textarea>
           </div>
-          
+
           <div class="form-group">
             <label for="eventColor">色</label>
             <select id="eventColor" class="form-input">
@@ -255,6 +257,7 @@
     <span id="successMessage"></span>
   </div>
 
+  <?!= include('Swipy'); ?>
   <?!= include('JavaScript'); ?>
 </body>
 </html>

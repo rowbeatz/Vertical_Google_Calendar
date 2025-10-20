@@ -6,7 +6,7 @@
 
 (function() {
   'use strict';
-  
+
   const AppState = {
     calendars: [],
     selectedCalendars: [],
@@ -29,35 +29,35 @@
     resizingColumnIndex: -1,
     isResizingCalendarColumn: false
   };
-  
+
   document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
   });
-  
+
   async function initializeApp() {
     try {
       showLoading(true);
-      
+
       await loadSettings();
       await loadCalendars();
-      
+
       if (AppState.settings.darkMode) {
         document.body.classList.add('dark-mode');
         updateDarkModeIcon(true);
       }
-      
+
       if (AppState.settings.columnWidth) {
         AppState.columnWidth = AppState.settings.columnWidth;
       }
-      
+
       if (AppState.settings.calendarColumnWidth) {
         AppState.calendarColumnWidth = AppState.settings.calendarColumnWidth;
       }
-      
+
       initializeDateRange();
       setupEventListeners();
       await renderCalendarView();
-      
+
       showLoading(false);
     } catch (error) {
       console.error('Initialization error:', error);
@@ -65,7 +65,7 @@
       showLoading(false);
     }
   }
-  
+
   async function loadSettings() {
     return new Promise((resolve, reject) => {
       google.script.run
@@ -82,7 +82,7 @@
         .loadUserSettings();
     });
   }
-  
+
   async function saveSettings() {
     return new Promise((resolve, reject) => {
       const settings = {
@@ -95,7 +95,7 @@
         columnWidth: AppState.columnWidth,
         calendarColumnWidth: AppState.calendarColumnWidth
       };
-      
+
       google.script.run
         .withSuccessHandler(function(result) {
           if (result.success) {
@@ -111,26 +111,26 @@
         .saveUserSettings(settings);
     });
   }
-  
+
   function toggleDarkMode() {
     document.body.classList.toggle('dark-mode');
     const isDark = document.body.classList.contains('dark-mode');
     updateDarkModeIcon(isDark);
     saveSettings();
   }
-  
+
   function updateDarkModeIcon(isDark) {
     const btn = document.getElementById('darkModeToggle');
     btn.textContent = isDark ? '☀️' : '🌙';
     btn.title = isDark ? 'ライトモード' : 'ダークモード';
   }
-  
+
   async function loadCalendars() {
     return new Promise((resolve, reject) => {
       google.script.run
         .withSuccessHandler(function(calendars) {
           AppState.calendars = calendars;
-          
+
           if (AppState.settings.customColors) {
             AppState.calendars.forEach(cal => {
               if (AppState.settings.customColors[cal.id]) {
@@ -138,7 +138,7 @@
               }
             });
           }
-          
+
           renderCalendarList();
           resolve();
         })
@@ -146,34 +146,34 @@
         .getAvailableCalendars();
     });
   }
-  
+
   function renderCalendarList() {
     const container = document.getElementById('calendarList');
     container.innerHTML = '';
-    
+
     const sortedCalendars = [...AppState.calendars].sort((a, b) => {
       const indexA = AppState.calendarOrder.indexOf(a.id);
       const indexB = AppState.calendarOrder.indexOf(b.id);
-      
+
       if (indexA === -1 && indexB === -1) return 0;
       if (indexA === -1) return 1;
       if (indexB === -1) return -1;
       return indexA - indexB;
     });
-    
+
     sortedCalendars.forEach((calendar, index) => {
       const item = createCalendarItem(calendar, index);
       container.appendChild(item);
     });
   }
-  
+
   function createCalendarItem(calendar, index) {
     const div = document.createElement('div');
     div.className = 'calendar-item';
     div.draggable = true;
     div.dataset.calendarId = calendar.id;
     div.dataset.index = index;
-    
+
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.className = 'calendar-checkbox';
@@ -181,7 +181,7 @@
     checkbox.addEventListener('change', function() {
       handleCalendarSelection(calendar.id, this.checked);
     });
-    
+
     const colorDiv = document.createElement('div');
     colorDiv.className = 'calendar-color';
     colorDiv.style.backgroundColor = calendar.color;
@@ -190,28 +190,28 @@
       e.stopPropagation();
       openCalendarColorModal(calendar);
     });
-    
+
     const nameSpan = document.createElement('span');
     nameSpan.className = 'calendar-name';
     nameSpan.textContent = calendar.name;
-    
+
     const dragHandle = document.createElement('span');
     dragHandle.className = 'drag-handle';
     dragHandle.innerHTML = '⋮⋮';
-    
+
     div.appendChild(checkbox);
     div.appendChild(colorDiv);
     div.appendChild(nameSpan);
     div.appendChild(dragHandle);
-    
+
     div.addEventListener('dragstart', handleDragStart);
     div.addEventListener('dragover', handleDragOver);
     div.addEventListener('drop', handleDrop);
     div.addEventListener('dragend', handleDragEnd);
-    
+
     return div;
   }
-  
+
   async function handleCalendarSelection(calendarId, isSelected) {
     if (isSelected) {
       if (!AppState.selectedCalendars.includes(calendarId)) {
@@ -223,11 +223,11 @@
         AppState.selectedCalendars.splice(index, 1);
       }
     }
-    
+
     await updateSelectedCalendars();
     await renderCalendarView();
   }
-  
+
   async function updateSelectedCalendars() {
     return new Promise((resolve, reject) => {
       google.script.run
@@ -236,7 +236,7 @@
         .updateSelectedCalendars(AppState.selectedCalendars);
     });
   }
-  
+
   function openCalendarColorModal(calendar) {
     AppState.currentCalendarForColor = calendar;
     const modal = document.getElementById('calendarColorModal');
@@ -244,29 +244,29 @@
     nameEl.textContent = `「${calendar.name}」の表示色を選択`;
     modal.classList.add('active');
   }
-  
+
   function closeCalendarColorModal() {
     document.getElementById('calendarColorModal').classList.remove('active');
     AppState.currentCalendarForColor = null;
   }
-  
+
   async function setCalendarCustomColor(color) {
     if (!AppState.currentCalendarForColor) return;
-    
+
     const calId = AppState.currentCalendarForColor.id;
-    
+
     return new Promise((resolve, reject) => {
       google.script.run
         .withSuccessHandler(function(result) {
           if (result.success) {
             const cal = AppState.calendars.find(c => c.id === calId);
             if (cal) cal.color = color;
-            
+
             if (!AppState.settings.customColors) {
               AppState.settings.customColors = {};
             }
             AppState.settings.customColors[calId] = color;
-            
+
             renderCalendarList();
             renderCalendarView();
             closeCalendarColorModal();
@@ -281,66 +281,66 @@
         .saveCalendarCustomColor(calId, color);
     });
   }
-  
+
   async function resetCalendarColor() {
     if (!AppState.currentCalendarForColor) return;
-    
+
     const calId = AppState.currentCalendarForColor.id;
-    
+
     if (AppState.settings.customColors) {
       delete AppState.settings.customColors[calId];
     }
-    
+
     await saveSettings();
     await loadCalendars();
     await renderCalendarView();
     closeCalendarColorModal();
     showSuccess('色をリセットしました');
   }
-  
+
   function handleDragStart(e) {
     AppState.draggedElement = this;
     AppState.draggedIndex = parseInt(this.dataset.index);
     this.classList.add('dragging');
     e.dataTransfer.effectAllowed = 'move';
   }
-  
+
   function handleDragOver(e) {
     if (e.preventDefault) e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     return false;
   }
-  
+
   function handleDrop(e) {
     if (e.stopPropagation) e.stopPropagation();
-    
+
     const dropIndex = parseInt(this.dataset.index);
-    
+
     if (AppState.draggedIndex !== dropIndex) {
       const currentOrder = getDisplayedCalendarIds();
       const draggedId = currentOrder[AppState.draggedIndex];
       currentOrder.splice(AppState.draggedIndex, 1);
       currentOrder.splice(dropIndex, 0, draggedId);
-      
+
       AppState.calendarOrder = currentOrder;
-      
+
       renderCalendarList();
       renderCalendarView();
       updateCalendarOrder();
     }
-    
+
     return false;
   }
-  
+
   function handleDragEnd(e) {
     this.classList.remove('dragging');
   }
-  
+
   function getDisplayedCalendarIds() {
     const items = document.querySelectorAll('.calendar-item');
     return Array.from(items).map(item => item.dataset.calendarId);
   }
-  
+
   async function updateCalendarOrder() {
     return new Promise((resolve, reject) => {
       google.script.run
@@ -349,10 +349,10 @@
         .updateCalendarOrder(AppState.calendarOrder);
     });
   }
-  
+
   function initializeDateRange() {
     const today = new Date();
-    
+
     if (AppState.viewMode === 'day') {
       AppState.startDate = new Date(today);
       AppState.startDate.setHours(0, 0, 0, 0);
@@ -365,48 +365,48 @@
       AppState.startDate = getMonthStart(today);
       AppState.endDate = getMonthEnd(AppState.startDate);
     }
-    
+
     updateDateInputs();
   }
-  
+
   function getWeekStart(date) {
     const d = new Date(date);
     const day = d.getDay();
     const diff = d.getDate() - day + (day === 0 ? -6 : 1);
     return new Date(d.setDate(diff));
   }
-  
+
   function getWeekEnd(startDate) {
     const end = new Date(startDate);
     end.setDate(end.getDate() + 6);
     return end;
   }
-  
+
   function getMonthStart(date) {
     const d = new Date(date);
     return new Date(d.getFullYear(), d.getMonth(), 1);
   }
-  
+
   function getMonthEnd(startDate) {
     const d = new Date(startDate);
     return new Date(d.getFullYear(), d.getMonth() + 1, 0);
   }
-  
+
   function updateDateInputs() {
     const startInput = document.getElementById('startDatePicker');
     const endInput = document.getElementById('endDatePicker');
-    
+
     startInput.value = formatDateForInput(AppState.startDate);
     endInput.value = formatDateForInput(AppState.endDate);
   }
-  
+
   function formatDateForInput(date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
-  
+
   function navigatePrev() {
     if (AppState.viewMode === 'day') {
       AppState.startDate.setDate(AppState.startDate.getDate() - 1);
@@ -421,7 +421,7 @@
     updateDateInputs();
     renderCalendarView();
   }
-  
+
   function navigateNext() {
     if (AppState.viewMode === 'day') {
       AppState.startDate.setDate(AppState.startDate.getDate() + 1);
@@ -436,25 +436,37 @@
     updateDateInputs();
     renderCalendarView();
   }
-  
-  function navigateToday() {
+
+  async function navigateToday() {
     initializeDateRange();
-    renderCalendarView();
+    await renderCalendarView();
+
+    if (!isMobileView()) {
+        const today = new Date();
+        const dates = generateDateRange(AppState.startDate, AppState.endDate);
+        const todayIndex = dates.findIndex(date => isToday(date));
+
+        if (todayIndex !== -1) {
+            const rightSection = document.querySelector('.calendar-right-section');
+            const scrollLeft = todayIndex * AppState.columnWidth;
+            rightSection.scrollLeft = scrollLeft;
+        }
+    }
   }
-  
+
   function changeViewMode(mode) {
     AppState.viewMode = mode;
     initializeDateRange();
     saveSettings();
     renderCalendarView();
   }
-  
+
   async function loadEvents() {
     if (AppState.selectedCalendars.length === 0) {
       AppState.events = {};
       return;
     }
-    
+
     return new Promise((resolve, reject) => {
       google.script.run
         .withSuccessHandler(function(events) {
@@ -469,30 +481,30 @@
         );
     });
   }
-  
+
   async function showEventDetail(event) {
     AppState.currentEvent = event;
-    
+
     const modal = document.getElementById('eventDetailModal');
-    
+
     const startDate = new Date(event.start);
     let endDate = new Date(event.end);
     if (event.isAllDay) {
       endDate.setDate(endDate.getDate() - 1);
     }
-    
+
     document.getElementById('detailTitle').textContent = event.title;
     document.getElementById('detailStart').textContent = formatDateTime(startDate, event.isAllDay);
     document.getElementById('detailEnd').textContent = formatDateTime(endDate, event.isAllDay);
     document.getElementById('detailLocation').textContent = event.location || '(なし)';
     document.getElementById('detailDescription').textContent = event.description || '(なし)';
-    
+
     const calendar = AppState.calendars.find(c => c.id === event.calendarId);
     document.getElementById('detailCalendar').textContent = calendar ? calendar.name : '不明';
-    
+
     const editBtn = document.getElementById('editEventBtn');
     const deleteBtn = document.getElementById('deleteEventBtn');
-    
+
     if (calendar && calendar.isEditable) {
       editBtn.style.display = 'inline-block';
       deleteBtn.style.display = 'inline-block';
@@ -500,22 +512,22 @@
       editBtn.style.display = 'none';
       deleteBtn.style.display = 'none';
     }
-    
+
     modal.classList.add('active');
   }
-  
+
   function closeEventDetailModal() {
     document.getElementById('eventDetailModal').classList.remove('active');
     AppState.currentEvent = null;
   }
-  
+
   function formatDateTime(date, isAllDay) {
     if (isAllDay) {
       return formatDate(date);
     }
     return `${formatDate(date)} ${formatTime(date)}`;
   }
-  
+
   function formatDate(date) {
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
@@ -524,34 +536,34 @@
     const dayOfWeek = dayNames[date.getDay()];
     return `${year}年${month}月${day}日(${dayOfWeek})`;
   }
-  
+
   function formatTime(date) {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${hours}:${minutes}`;
   }
-  
+
   function openEventFormModal(mode = 'create', event = null) {
     AppState.isEditMode = mode === 'edit';
-    
+
     const modal = document.getElementById('eventFormModal');
     const title = document.getElementById('formModalTitle');
     const form = document.getElementById('eventForm');
-    
+
     title.textContent = mode === 'create' ? 'イベント作成' : 'イベント編集';
-    
+
     populateCalendarSelect();
-    
+
     if (mode === 'create') {
       form.reset();
-      
+
       const today = new Date();
       document.getElementById('eventStartDate').value = formatDateForInput(today);
       document.getElementById('eventEndDate').value = formatDateForInput(today);
       document.getElementById('eventStartTime').value = '09:00';
       document.getElementById('eventEndTime').value = '10:00';
-      
-      const editableCalendar = AppState.calendars.find(c => 
+
+      const editableCalendar = AppState.calendars.find(c =>
         c.isEditable && AppState.selectedCalendars.includes(c.id)
       );
       if (editableCalendar) {
@@ -559,23 +571,23 @@
       }
     } else if (event) {
       AppState.currentEvent = event;
-      
+
       document.getElementById('eventTitle').value = event.title;
       document.getElementById('eventCalendar').value = event.calendarId;
       document.getElementById('eventLocation').value = event.location || '';
       document.getElementById('eventDescription').value = event.description || '';
       document.getElementById('eventColor').value = event.color || '';
-      
+
       const startDate = new Date(event.start);
       let endDate = new Date(event.end);
-      
+
       if (event.isAllDay) {
         endDate.setDate(endDate.getDate() - 1);
       }
-      
+
       document.getElementById('eventStartDate').value = formatDateForInput(startDate);
       document.getElementById('eventEndDate').value = formatDateForInput(endDate);
-      
+
       if (event.isAllDay) {
         document.getElementById('eventAllDay').checked = true;
         toggleTimeFields(true);
@@ -586,14 +598,14 @@
         toggleTimeFields(false);
       }
     }
-    
+
     modal.classList.add('active');
   }
-  
+
   function populateCalendarSelect() {
     const select = document.getElementById('eventCalendar');
     select.innerHTML = '';
-    
+
     AppState.calendars.forEach(calendar => {
       if (calendar.isEditable) {
         const option = document.createElement('option');
@@ -603,17 +615,17 @@
       }
     });
   }
-  
+
   function closeEventFormModal() {
     document.getElementById('eventFormModal').classList.remove('active');
     AppState.isEditMode = false;
     AppState.currentEvent = null;
   }
-  
+
   function toggleTimeFields(isAllDay) {
     const startTimeGroup = document.getElementById('eventStartTimeGroup');
     const endTimeGroup = document.getElementById('eventEndTimeGroup');
-    
+
     if (isAllDay) {
       startTimeGroup.style.display = 'none';
       endTimeGroup.style.display = 'none';
@@ -622,7 +634,7 @@
       endTimeGroup.style.display = 'block';
     }
   }
-  
+
   async function saveEvent() {
     const title = document.getElementById('eventTitle').value.trim();
     const calendarId = document.getElementById('eventCalendar').value;
@@ -634,19 +646,19 @@
     const location = document.getElementById('eventLocation').value.trim();
     const description = document.getElementById('eventDescription').value.trim();
     const color = document.getElementById('eventColor').value;
-    
+
     if (!title) {
       showError('タイトルを入力してください');
       return;
     }
-    
+
     if (!calendarId) {
       showError('カレンダーを選択してください');
       return;
     }
-    
+
     let start, end;
-    
+
     if (isAllDay) {
       start = new Date(startDate + 'T00:00:00');
       end = new Date(endDate + 'T00:00:00');
@@ -655,12 +667,12 @@
       start = new Date(startDate + 'T' + startTime + ':00');
       end = new Date(endDate + 'T' + endTime + ':00');
     }
-    
+
     if (end <= start) {
       showError('終了日時は開始日時より後に設定してください');
       return;
     }
-    
+
     const eventData = {
       title: title,
       start: start.toISOString(),
@@ -670,9 +682,9 @@
       description: description,
       color: color
     };
-    
+
     showLoading(true);
-    
+
     try {
       if (AppState.isEditMode && AppState.currentEvent) {
         await updateEventOnServer(calendarId, AppState.currentEvent.id, eventData);
@@ -681,7 +693,7 @@
         await createEventOnServer(calendarId, eventData);
         showSuccess('イベントを作成しました');
       }
-      
+
       closeEventFormModal();
       await renderCalendarView();
     } catch (error) {
@@ -690,7 +702,7 @@
       showLoading(false);
     }
   }
-  
+
   async function createEventOnServer(calendarId, eventData) {
     return new Promise((resolve, reject) => {
       google.script.run
@@ -705,7 +717,7 @@
         .createEvent(calendarId, eventData);
     });
   }
-  
+
   async function updateEventOnServer(calendarId, eventId, eventData) {
     return new Promise((resolve, reject) => {
       google.script.run
@@ -720,16 +732,16 @@
         .updateEvent(calendarId, eventId, eventData);
     });
   }
-  
+
   async function deleteCurrentEvent() {
     if (!AppState.currentEvent) return;
-    
+
     if (!confirm('このイベントを削除してもよろしいですか?')) {
       return;
     }
-    
+
     showLoading(true);
-    
+
     try {
       await deleteEventOnServer(AppState.currentEvent.calendarId, AppState.currentEvent.id);
       showSuccess('イベントを削除しました');
@@ -741,7 +753,7 @@
       showLoading(false);
     }
   }
-  
+
   async function deleteEventOnServer(calendarId, eventId) {
     return new Promise((resolve, reject) => {
       google.script.run
@@ -756,39 +768,40 @@
         .deleteEvent(calendarId, eventId);
     });
   }
-  
+
   function isMobileView() {
     return window.innerWidth <= 768;
   }
-  
+
   async function renderCalendarView() {
     try {
       showLoading(true);
-      
+
       await loadEvents();
-      
+
       const container = document.getElementById('calendarView');
-      
+
       if (AppState.selectedCalendars.length === 0) {
         container.innerHTML = '<div class="text-center" style="padding: 40px; color: var(--gray-500);">カレンダーを選択してください</div>';
-        
+
         const mobileContainer = document.querySelector('.calendar-view-mobile');
         if (mobileContainer) {
           mobileContainer.innerHTML = '<div class="mobile-no-events">カレンダーを選択してください</div>';
         }
-        
+
         showLoading(false);
         return;
       }
-      
+
       if (isMobileView()) {
         renderMobileCalendarView();
       } else {
         container.innerHTML = '';
         const grid = createCalendarGrid();
         container.appendChild(grid);
+        syncRowHeights();
       }
-      
+
       showLoading(false);
     } catch (error) {
       console.error('Error rendering calendar:', error);
@@ -796,487 +809,501 @@
       showLoading(false);
     }
   }
-  
+
+  function syncRowHeights() {
+    const nameRows = document.querySelectorAll('.calendar-name-row');
+    const bodyGrid = document.querySelector('.calendar-body-grid');
+    if (!bodyGrid || nameRows.length === 0) return;
+
+    const numCalendars = nameRows.length;
+    const numDates = (bodyGrid.children.length / numCalendars);
+
+    for (let i = 0; i < numCalendars; i++) {
+        let maxRowHeight = 0;
+        for (let j = 0; j < numDates; j++) {
+            const cell = bodyGrid.children[i * numDates + j];
+            if (cell.scrollHeight > maxRowHeight) {
+                maxRowHeight = cell.scrollHeight;
+            }
+        }
+
+        const targetHeight = Math.max(50, maxRowHeight) + 'px';
+        nameRows[i].style.height = targetHeight;
+
+        for (let j = 0; j < numDates; j++) {
+            bodyGrid.children[i * numDates + j].style.height = targetHeight;
+        }
+    }
+}
+
   function createCalendarGrid() {
     const container = document.createElement('div');
     container.className = 'calendar-view';
-    
+
     const dates = generateDateRange(AppState.startDate, AppState.endDate);
     const orderedCalendars = getOrderedSelectedCalendars();
-    
-    // 左側のカレンダー名列を作成
+
     const leftColumn = createLeftColumn(orderedCalendars);
-    
-    // 右側のスクロール可能エリアを作成
     const rightSection = createRightSection(dates, orderedCalendars);
-    
+
     container.appendChild(leftColumn);
     container.appendChild(rightSection);
-    
-    // 右側のスクロールイベントと左側のスクロールを同期
-    const rightScroll = rightSection;
+
     const leftScroll = leftColumn.querySelector('.calendar-name-list');
-    
-    rightScroll.addEventListener('scroll', function() {
-      leftScroll.scrollTop = rightScroll.scrollTop;
+
+    let isSyncing = false;
+
+    rightSection.addEventListener('scroll', function() {
+        if (isSyncing) return;
+        isSyncing = true;
+        leftScroll.scrollTop = rightSection.scrollTop;
+        requestAnimationFrame(() => { isSyncing = false; });
     });
-    
+
+    leftScroll.addEventListener('scroll', function() {
+        if (isSyncing) return;
+        isSyncing = true;
+        rightSection.scrollTop = leftScroll.scrollTop;
+        requestAnimationFrame(() => { isSyncing = false; });
+    });
+
     return container;
   }
-  
+
   function createLeftColumn(calendars) {
     const leftColumn = document.createElement('div');
     leftColumn.className = 'calendar-left-column';
     leftColumn.style.width = AppState.calendarColumnWidth + 'px';
-    
+
     const cornerCell = document.createElement('div');
     cornerCell.className = 'calendar-corner-cell';
     cornerCell.textContent = 'カレンダー';
     cornerCell.style.width = AppState.calendarColumnWidth + 'px';
     cornerCell.style.height = '73px'; // ヘッダーと同じ高さ
-    
+
     const calendarResizeHandle = document.createElement('div');
     calendarResizeHandle.className = 'resize-handle';
     calendarResizeHandle.dataset.columnType = 'calendar';
     calendarResizeHandle.addEventListener('mousedown', handleCalendarColumnResizeStart);
     cornerCell.appendChild(calendarResizeHandle);
-    
+
     const nameList = document.createElement('div');
     nameList.className = 'calendar-name-list';
-    
+
     calendars.forEach(calendar => {
       const nameRow = document.createElement('div');
       nameRow.className = 'calendar-name-row';
       nameRow.style.width = AppState.calendarColumnWidth + 'px';
-      
+
       const colorIndicator = document.createElement('div');
       colorIndicator.className = 'calendar-color';
       colorIndicator.style.backgroundColor = calendar.color;
-      
+
       const nameSpan = document.createElement('span');
       nameSpan.textContent = calendar.name;
-      
+
       nameRow.appendChild(colorIndicator);
       nameRow.appendChild(nameSpan);
       nameList.appendChild(nameRow);
     });
-    
+
     leftColumn.appendChild(cornerCell);
     leftColumn.appendChild(nameList);
-    
+
     return leftColumn;
   }
-  
+
   function createRightSection(dates, calendars) {
     const rightSection = document.createElement('div');
     rightSection.className = 'calendar-right-section';
     rightSection.style.marginLeft = AppState.calendarColumnWidth + 'px';
-    
+
     const wrapper = document.createElement('div');
     wrapper.className = 'calendar-dates-wrapper';
-    
+
     // ヘッダー行を作成
     const headerRow = createHeaderRow(dates);
-    
+
     // ボディグリッドを作成
     const bodyGrid = document.createElement('div');
     bodyGrid.className = 'calendar-body-grid';
     bodyGrid.style.gridTemplateColumns = `repeat(${dates.length}, ${AppState.columnWidth}px)`;
-    
+
     calendars.forEach(calendar => {
       const calendarEvents = AppState.events[calendar.id] || [];
-      
+
       dates.forEach(date => {
         const cell = document.createElement('div');
         cell.className = 'calendar-cell';
         cell.style.minWidth = AppState.columnWidth + 'px';
         cell.style.maxWidth = AppState.columnWidth + 'px';
-        
+
         const dayEvents = getEventsForDate(calendarEvents, date);
-        
+
         dayEvents.forEach(event => {
           const eventDiv = createEventElement(event, calendar.color);
           cell.appendChild(eventDiv);
         });
-        
+
         bodyGrid.appendChild(cell);
       });
     });
-    
+
     wrapper.appendChild(headerRow);
     wrapper.appendChild(bodyGrid);
     rightSection.appendChild(wrapper);
-    
+
     return rightSection;
   }
-  
+
   function createHeaderRow(dates) {
     const headerRow = document.createElement('div');
     headerRow.className = 'calendar-header-row';
-    
+
     dates.forEach((date, index) => {
       const cell = document.createElement('div');
       cell.className = 'calendar-header-cell';
       cell.style.width = AppState.columnWidth + 'px';
       cell.style.minWidth = AppState.columnWidth + 'px';
-      
+
       const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
       const dayOfWeek = dayNames[date.getDay()];
       const dateStr = `${date.getMonth() + 1}/${date.getDate()}`;
-      
+
       cell.innerHTML = `<div>${dateStr}</div><div style="font-size: 12px; font-weight: normal;">(${dayOfWeek})</div>`;
-      
+
       if (isToday(date)) {
         cell.style.background = 'var(--primary-color)';
         cell.style.color = 'white';
       }
-      
+
       const resizeHandle = document.createElement('div');
       resizeHandle.className = 'resize-handle';
       resizeHandle.dataset.columnIndex = index;
       resizeHandle.addEventListener('mousedown', handleResizeStart);
       cell.appendChild(resizeHandle);
-      
+
       headerRow.appendChild(cell);
     });
-    
+
     return headerRow;
   }
-  
+
   function handleCalendarColumnResizeStart(e) {
     e.preventDefault();
     e.stopPropagation();
-    
+
     AppState.isResizingCalendarColumn = true;
     AppState.resizeStartX = e.clientX;
     AppState.resizeStartWidth = AppState.calendarColumnWidth;
-    
+
     this.classList.add('resizing');
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
-    
+
     document.addEventListener('mousemove', handleCalendarColumnResizeMove);
     document.addEventListener('mouseup', handleCalendarColumnResizeEnd);
   }
-  
+
   function handleCalendarColumnResizeMove(e) {
     if (!AppState.isResizingCalendarColumn) return;
-    
+
     const delta = e.clientX - AppState.resizeStartX;
     let newWidth = AppState.resizeStartWidth + delta;
-    
+
     newWidth = Math.max(140, Math.min(240, newWidth));
-    
+
     AppState.calendarColumnWidth = newWidth;
-    
+
     const leftColumn = document.querySelector('.calendar-left-column');
     if (leftColumn) {
       leftColumn.style.width = newWidth + 'px';
     }
-    
+
     const cornerCell = document.querySelector('.calendar-corner-cell');
     if (cornerCell) {
       cornerCell.style.width = newWidth + 'px';
     }
-    
+
     const nameRows = document.querySelectorAll('.calendar-name-row');
     nameRows.forEach(row => {
       row.style.width = newWidth + 'px';
     });
-    
+
     const rightSection = document.querySelector('.calendar-right-section');
     if (rightSection) {
       rightSection.style.marginLeft = newWidth + 'px';
     }
   }
-  
+
   function handleCalendarColumnResizeEnd(e) {
     if (!AppState.isResizingCalendarColumn) return;
-    
+
     AppState.isResizingCalendarColumn = false;
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
-    
+
     document.querySelectorAll('.resize-handle').forEach(handle => {
       handle.classList.remove('resizing');
     });
-    
+
     document.removeEventListener('mousemove', handleCalendarColumnResizeMove);
     document.removeEventListener('mouseup', handleCalendarColumnResizeEnd);
-    
+
     saveSettings();
   }
-  
+
   function handleResizeStart(e) {
     e.preventDefault();
     e.stopPropagation();
-    
+
     AppState.isResizing = true;
     AppState.resizeStartX = e.clientX;
     AppState.resizeStartWidth = AppState.columnWidth;
     AppState.resizingColumnIndex = parseInt(this.dataset.columnIndex);
-    
+
     this.classList.add('resizing');
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
-    
+
     document.addEventListener('mousemove', handleResizeMove);
     document.addEventListener('mouseup', handleResizeEnd);
   }
-  
+
   function handleResizeMove(e) {
     if (!AppState.isResizing) return;
-    
+
     const delta = e.clientX - AppState.resizeStartX;
     let newWidth = AppState.resizeStartWidth + delta;
-    
+
     newWidth = Math.max(140, Math.min(300, newWidth));
-    
+
     AppState.columnWidth = newWidth;
-    
+
     const headerCells = document.querySelectorAll('.calendar-header-cell');
     const bodyCells = document.querySelectorAll('.calendar-cell');
-    
+
     headerCells.forEach(cell => {
       cell.style.width = newWidth + 'px';
       cell.style.minWidth = newWidth + 'px';
     });
-    
+
     bodyCells.forEach(cell => {
       cell.style.minWidth = newWidth + 'px';
       cell.style.maxWidth = newWidth + 'px';
     });
-    
+
     const dates = generateDateRange(AppState.startDate, AppState.endDate);
     const bodyGrid = document.querySelector('.calendar-body-grid');
-    
+
     if (bodyGrid) {
       bodyGrid.style.gridTemplateColumns = `repeat(${dates.length}, ${newWidth}px)`;
     }
   }
-  
+
   function handleResizeEnd(e) {
     if (!AppState.isResizing) return;
-    
+
     AppState.isResizing = false;
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
-    
+
     document.querySelectorAll('.resize-handle').forEach(handle => {
       handle.classList.remove('resizing');
     });
-    
+
     document.removeEventListener('mousemove', handleResizeMove);
     document.removeEventListener('mouseup', handleResizeEnd);
-    
+
     saveSettings();
   }
-  
+
   function createEventElement(event, defaultColor) {
     const div = document.createElement('div');
     div.className = 'event';
     div.title = event.title + (event.location ? '\n場所: ' + event.location : '');
-    
+
     if (event.color) {
       div.style.backgroundColor = event.color;
     } else {
       div.style.backgroundColor = defaultColor;
     }
-    
+
     if (!event.isAllDay) {
       const startTime = new Date(event.start);
       const timeStr = `${String(startTime.getHours()).padStart(2, '0')}:${String(startTime.getMinutes()).padStart(2, '0')}`;
-      
+
       const timeSpan = document.createElement('span');
       timeSpan.className = 'event-time';
       timeSpan.textContent = timeStr;
       div.appendChild(timeSpan);
     }
-    
+
     const titleSpan = document.createElement('span');
     titleSpan.textContent = event.title;
     div.appendChild(titleSpan);
-    
+
     div.addEventListener('click', function() {
       showEventDetail(event);
     });
-    
+
     return div;
   }
-  
+
   function renderMobileCalendarView() {
     let mobileContainer = document.querySelector('.calendar-view-mobile');
-    
     if (!mobileContainer) {
-      mobileContainer = document.createElement('div');
-      mobileContainer.className = 'calendar-view-mobile';
-      document.querySelector('.calendar-view-container').appendChild(mobileContainer);
+        mobileContainer = document.createElement('div');
+        mobileContainer.className = 'calendar-view-mobile';
+        document.querySelector('.calendar-view-container').appendChild(mobileContainer);
     }
-    
     mobileContainer.innerHTML = '';
-    
+
     const dates = generateDateRange(AppState.startDate, AppState.endDate);
     const orderedCalendars = getOrderedSelectedCalendars();
-    
+
+    let eventsFound = false;
+
+    const fragment = document.createDocumentFragment();
+
     dates.forEach(date => {
-      const dayCard = createMobileDayCard(date, orderedCalendars);
-      mobileContainer.appendChild(dayCard);
+        const eventsForDay = [];
+        orderedCalendars.forEach(calendar => {
+            const calendarEvents = AppState.events[calendar.id] || [];
+            const dayEvents = getEventsForDate(calendarEvents, date);
+            if (dayEvents.length > 0) {
+                eventsFound = true;
+                dayEvents.forEach(event => {
+                    eventsForDay.push({ event, calendar });
+                });
+            }
+        });
+
+        eventsForDay.sort((a,b) => new Date(a.event.start) - new Date(b.event.start));
+
+        const dayGroup = createMobileDayGroup(date, eventsForDay);
+        fragment.appendChild(dayGroup);
     });
-  }
-  
-  function createMobileDayCard(date, calendars) {
-    const card = document.createElement('div');
-    card.className = 'mobile-day-card';
-    
+
+    if (!eventsFound) {
+        mobileContainer.innerHTML = '<div class="mobile-no-events">この期間に予定はありません</div>';
+    } else {
+        mobileContainer.appendChild(fragment);
+    }
+}
+
+function createMobileDayGroup(date, eventsWithCalendar) {
+    const group = document.createElement('div');
+    group.className = 'mobile-day-group';
+
     const header = document.createElement('div');
-    header.className = 'mobile-day-header';
+    header.className = 'mobile-day-header-sticky';
     if (isToday(date)) {
-      header.classList.add('today');
+        header.classList.add('today');
     }
-    
-    const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const dayOfWeek = dayNames[date.getDay()];
-    const dateStr = `${date.getMonth() + 1}月${date.getDate()}日(${dayOfWeek})`;
-    header.textContent = dateStr;
-    
-    const content = document.createElement('div');
-    content.className = 'mobile-day-content';
-    
-    let hasEvents = false;
-    
-    calendars.forEach(calendar => {
-      const calendarEvents = AppState.events[calendar.id] || [];
-      const dayEvents = getEventsForDate(calendarEvents, date);
-      
-      if (dayEvents.length > 0) {
-        hasEvents = true;
-        const section = createMobileCalendarSection(calendar, dayEvents);
-        content.appendChild(section);
-      }
-    });
-    
-    if (!hasEvents) {
-      content.innerHTML = '<div class="mobile-no-events">予定なし</div>';
+    header.innerHTML = `<span class="date">${date.getDate()}</span> <span class="day">${dayOfWeek}</span>`;
+
+    group.appendChild(header);
+
+    if (eventsWithCalendar.length > 0) {
+        eventsWithCalendar.forEach(({ event, calendar }) => {
+            const eventEl = createMobileEventElement(event, calendar.color);
+            group.appendChild(eventEl);
+        });
     }
-    
-    card.appendChild(header);
-    card.appendChild(content);
-    
-    return card;
-  }
-  
-  function createMobileCalendarSection(calendar, events) {
-    const section = document.createElement('div');
-    section.className = 'mobile-calendar-section';
-    
-    const header = document.createElement('div');
-    header.className = 'mobile-calendar-header';
-    
-    const colorIndicator = document.createElement('div');
-    colorIndicator.className = 'calendar-color';
-    colorIndicator.style.backgroundColor = calendar.color;
-    
-    const nameSpan = document.createElement('span');
-    nameSpan.className = 'mobile-calendar-name';
-    nameSpan.textContent = calendar.name;
-    
-    header.appendChild(colorIndicator);
-    header.appendChild(nameSpan);
-    
-    const eventsList = document.createElement('div');
-    eventsList.className = 'mobile-events-list';
-    
-    events.forEach(event => {
-      const eventDiv = createMobileEventElement(event, calendar.color);
-      eventsList.appendChild(eventDiv);
-    });
-    
-    section.appendChild(header);
-    section.appendChild(eventsList);
-    
-    return section;
-  }
-  
-  function createMobileEventElement(event, defaultColor) {
-    const div = document.createElement('div');
-    div.className = 'mobile-event';
-    div.style.borderLeftColor = event.color || defaultColor;
-    
+
+    return group;
+}
+
+function createMobileEventElement(event, calendarColor) {
+    const el = document.createElement('div');
+    el.className = 'mobile-event-item';
+
+    const colorBar = document.createElement('div');
+    colorBar.className = 'mobile-event-color-bar';
+    colorBar.style.backgroundColor = event.color || calendarColor;
+
+    const timeContainer = document.createElement('div');
+    timeContainer.className = 'mobile-event-time';
+    if (event.isAllDay) {
+        timeContainer.textContent = '終日';
+    } else {
+        const startTime = new Date(event.start);
+        const endTime = new Date(event.end);
+        timeContainer.innerHTML = `${formatTime(startTime)}<br>${formatTime(endTime)}`;
+    }
+
+    const detailsContainer = document.createElement('div');
+    detailsContainer.className = 'mobile-event-details';
+
     const title = document.createElement('div');
     title.className = 'mobile-event-title';
     title.textContent = event.title;
-    
-    const details = document.createElement('div');
-    details.className = 'mobile-event-details';
-    
-    if (!event.isAllDay) {
-      const startTime = new Date(event.start);
-      const endTime = new Date(event.end);
-      const timeStr = `${formatTime(startTime)} - ${formatTime(endTime)}`;
-      
-      const timeSpan = document.createElement('span');
-      timeSpan.textContent = '🕐 ' + timeStr;
-      details.appendChild(timeSpan);
-    } else {
-      const allDaySpan = document.createElement('span');
-      allDaySpan.textContent = '📅 終日';
-      details.appendChild(allDaySpan);
-    }
-    
+
+    const calendarName = document.createElement('div');
+    calendarName.className = 'mobile-event-calendar';
+    const cal = AppState.calendars.find(c => c.id === event.calendarId);
+    calendarName.textContent = cal ? cal.name : '';
+
+    detailsContainer.appendChild(title);
+    detailsContainer.appendChild(calendarName);
+
     if (event.location) {
-      const locationSpan = document.createElement('span');
-      locationSpan.textContent = '📍 ' + event.location;
-      details.appendChild(locationSpan);
+        const location = document.createElement('div');
+        location.className = 'mobile-event-location';
+        location.textContent = `📍 ${event.location}`;
+        detailsContainer.appendChild(location);
     }
-    
-    div.appendChild(title);
-    div.appendChild(details);
-    
-    div.addEventListener('click', function() {
-      showEventDetail(event);
-    });
-    
-    return div;
-  }
-  
+
+    el.appendChild(colorBar);
+    el.appendChild(timeContainer);
+    el.appendChild(detailsContainer);
+
+    el.addEventListener('click', () => showEventDetail(event));
+
+    return el;
+}
+
   function generateDateRange(start, end) {
     const dates = [];
     const current = new Date(start);
-    
+
     while (current <= end) {
       dates.push(new Date(current));
       current.setDate(current.getDate() + 1);
     }
-    
+
     return dates;
   }
-  
+
   function getOrderedSelectedCalendars() {
-    const selected = AppState.calendars.filter(cal => 
+    const selected = AppState.calendars.filter(cal =>
       AppState.selectedCalendars.includes(cal.id)
     );
-    
+
     return selected.sort((a, b) => {
       const indexA = AppState.calendarOrder.indexOf(a.id);
       const indexB = AppState.calendarOrder.indexOf(b.id);
-      
+
       if (indexA === -1 && indexB === -1) return 0;
       if (indexA === -1) return 1;
       if (indexB === -1) return -1;
       return indexA - indexB;
     });
   }
-  
+
   function getEventsForDate(events, date) {
     return events.filter(event => {
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
-      
+
       const dateStart = new Date(date);
       dateStart.setHours(0, 0, 0, 0);
       const dateEnd = new Date(date);
       dateEnd.setHours(23, 59, 59, 999);
-      
+
       if (event.isAllDay) {
         return eventStart <= dateEnd && eventEnd > dateStart;
       } else {
@@ -1286,14 +1313,14 @@
       return new Date(a.start) - new Date(b.start);
     });
   }
-  
+
   function isToday(date) {
     const today = new Date();
     return date.getDate() === today.getDate() &&
            date.getMonth() === today.getMonth() &&
            date.getFullYear() === today.getFullYear();
   }
-  
+
   function showLoading(show) {
     const overlay = document.getElementById('loadingOverlay');
     if (show) {
@@ -1302,50 +1329,50 @@
       overlay.classList.add('hidden');
     }
   }
-  
+
   function showError(message) {
     const toast = document.getElementById('errorToast');
     const messageSpan = document.getElementById('errorMessage');
     messageSpan.textContent = message;
     toast.classList.add('show');
-    
+
     setTimeout(() => {
       toast.classList.remove('show');
     }, 3000);
   }
-  
+
   function showSuccess(message) {
     const toast = document.getElementById('successToast');
     const messageSpan = document.getElementById('successMessage');
     messageSpan.textContent = message;
     toast.classList.add('show');
-    
+
     setTimeout(() => {
       toast.classList.remove('show');
     }, 3000);
   }
-  
+
   function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
     sidebar.classList.toggle('collapsed');
-    
+
     if (window.innerWidth <= 768) {
       sidebar.classList.toggle('active');
     }
   }
-  
+
   function openSettingsModal() {
     const modal = document.getElementById('settingsModal');
     modal.classList.add('active');
-    
+
     document.getElementById('startDaySelect').value = AppState.settings.startDay || 1;
   }
-  
+
   function closeSettingsModal() {
     const modal = document.getElementById('settingsModal');
     modal.classList.remove('active');
   }
-  
+
   async function handleSaveSettings() {
     try {
       await saveSettings();
@@ -1356,14 +1383,33 @@
       showError('設定の保存に失敗しました');
     }
   }
-  
+
+  function createRipple(event) {
+    const button = event.currentTarget;
+    const circle = document.createElement("span");
+    const diameter = Math.max(button.clientWidth, button.clientHeight);
+    const radius = diameter / 2;
+
+    circle.style.width = circle.style.height = `${diameter}px`;
+    circle.style.left = `${event.clientX - button.getBoundingClientRect().left - radius}px`;
+    circle.style.top = `${event.clientY - button.getBoundingClientRect().top - radius}px`;
+    circle.classList.add("ripple");
+
+    const ripple = button.getElementsByClassName("ripple")[0];
+    if (ripple) {
+      ripple.remove();
+    }
+
+    button.appendChild(circle);
+  }
+
   function setupEventListeners() {
     document.getElementById('toggleSidebarBtn').addEventListener('click', toggleSidebar);
     document.getElementById('darkModeToggle').addEventListener('click', toggleDarkMode);
     document.getElementById('prevWeekBtn').addEventListener('click', navigatePrev);
     document.getElementById('nextWeekBtn').addEventListener('click', navigateNext);
     document.getElementById('todayBtn').addEventListener('click', navigateToday);
-    
+
     document.getElementById('startDatePicker').addEventListener('change', function() {
       AppState.startDate = new Date(this.value);
       if (AppState.viewMode === 'week') {
@@ -1374,29 +1420,33 @@
       updateDateInputs();
       renderCalendarView();
     });
-    
+
     document.getElementById('endDatePicker').addEventListener('change', function() {
       AppState.endDate = new Date(this.value);
       renderCalendarView();
     });
-    
+
     document.getElementById('refreshBtn').addEventListener('click', function() {
       renderCalendarView();
     });
-    
+
     document.getElementById('addEventBtn').addEventListener('click', function() {
       openEventFormModal('create');
     });
-    
+
+    document.getElementById('mobileAddEventFab').addEventListener('click', function() {
+        openEventFormModal('create');
+    });
+
     document.getElementById('settingsBtn').addEventListener('click', openSettingsModal);
     document.getElementById('closeSettingsBtn').addEventListener('click', closeSettingsModal);
     document.getElementById('saveSettingsBtn').addEventListener('click', handleSaveSettings);
     document.getElementById('cancelSettingsBtn').addEventListener('click', closeSettingsModal);
-    
+
     document.getElementById('settingsModal').addEventListener('click', function(e) {
       if (e.target === this) closeSettingsModal();
     });
-    
+
     document.getElementById('closeEventDetailBtn').addEventListener('click', closeEventDetailModal);
     document.getElementById('closeEventDetailBtn2').addEventListener('click', closeEventDetailModal);
     document.getElementById('editEventBtn').addEventListener('click', function() {
@@ -1404,46 +1454,57 @@
       openEventFormModal('edit', AppState.currentEvent);
     });
     document.getElementById('deleteEventBtn').addEventListener('click', deleteCurrentEvent);
-    
+
     document.getElementById('eventDetailModal').addEventListener('click', function(e) {
       if (e.target === this) closeEventDetailModal();
     });
-    
+
     document.getElementById('closeEventFormBtn').addEventListener('click', closeEventFormModal);
     document.getElementById('cancelEventFormBtn').addEventListener('click', closeEventFormModal);
     document.getElementById('saveEventBtn').addEventListener('click', saveEvent);
-    
+
     document.getElementById('eventAllDay').addEventListener('change', function() {
       toggleTimeFields(this.checked);
     });
-    
+
     document.getElementById('eventFormModal').addEventListener('click', function(e) {
       if (e.target === this) closeEventFormModal();
     });
-    
+
     document.getElementById('closeCalendarColorBtn').addEventListener('click', closeCalendarColorModal);
     document.getElementById('closeCalendarColorBtn2').addEventListener('click', closeCalendarColorModal);
     document.getElementById('resetCalendarColorBtn').addEventListener('click', resetCalendarColor);
-    
+
     document.querySelectorAll('.color-option').forEach(option => {
       option.addEventListener('click', function() {
         const color = this.dataset.color;
         setCalendarCustomColor(color);
       });
     });
-    
+
     document.getElementById('calendarColorModal').addEventListener('click', function(e) {
       if (e.target === this) closeCalendarColorModal();
     });
-    
+
     document.getElementById('viewModeSelect').addEventListener('change', function() {
       changeViewMode(this.value);
     });
-    
+
     window.addEventListener('resize', function() {
       renderCalendarView();
     });
+
+    if (isMobileView()) {
+        const swipy = new Swipy(document.querySelector('.calendar-view-container'));
+        swipy.on('swipeleft', navigateNext);
+        swipy.on('swiperight', navigatePrev);
+    }
+
+    const buttons = document.querySelectorAll("button, .nav-btn, .icon-btn, .fab");
+    buttons.forEach(btn => {
+      btn.addEventListener("click", createRipple);
+    });
   }
-  
+
 })();
 </script>
